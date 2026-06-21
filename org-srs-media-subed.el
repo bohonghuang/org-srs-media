@@ -42,6 +42,7 @@
   :type '(repeat string)
   :group 'org-srs-media)
 
+;;;###autoload
 (defun org-srs-media-convert-subed-buffer (subed-buffer)
   (interactive (list (read-buffer "Subed buffer: ")))
   (cl-flet ((file-name-sans-extension (file)

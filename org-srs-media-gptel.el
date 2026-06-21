@@ -62,6 +62,7 @@
   :type 'string
   :group 'org-srs-media)
 
+;;;###autoload
 (defun org-srs-media-explain-this-entry ()
   (interactive)
   (org-srs-entry-beginning-of-drawer org-srs-media-explain-drawer-name)
