@@ -69,9 +69,9 @@
             (define-key map (kbd "<SPC>") #'org-ctrl-c-ctrl-c)
             map))
 
-(defun org-srs-media-navi-setup (&rest _)
-  "Enable `org-srs-media-navi-mode' for `media+front+back' review items."
-  (when (eq (cl-first (ensure-list (cl-first org-srs-review-item))) 'media+front+back)
+(defun org-srs-media-navi-setup (type &rest _args)
+  "Enable `org-srs-media-navi-mode' for `media+front+back' TYPE review items."
+  (when (eq type 'media+front+back)
     (org-srs-media-navi-mode +1)
     (org-srs-review-add-hook-once
      'org-srs-review-continue-hook
