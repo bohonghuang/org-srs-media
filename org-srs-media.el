@@ -1,8 +1,28 @@
-;;; org-srs-media.el --- Media (video/audio) integration for org-srs -*- lexical-binding: t; -*-
+;;; org-srs-media.el --- Media integration for Org-srs -*- lexical-binding: t; -*-
 
-;; Author: Coco
-;; Package-Requires: ((emacs "27.1") (org-srs) (mpvi) (subed) (emms) (cl-lib))
-;; Keywords: multimedia, org
+;; Copyright (C) 2026 Bohong Huang
+
+;; Author: Bohong Huang <bohonghuang@qq.com>
+;; Maintainer: Bohong Huang <bohonghuang@qq.com>
+;; Version: 1.0
+;; Package-Requires: ((emacs "27.1") (org-srs "1.0") (mpvi) (subed) (emms) (gptel))
+;; URL: https://github.com/bohonghuang/org-srs-media
+;; Keywords: multimedia, outline
+
+;; This file is not part of GNU Emacs.
+
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -14,6 +34,8 @@
 (require 'org-srs)
 (require 'mpvi)
 (require 'subed)
+(require 'emms)
+(require 'gptel)
 
 (defcustom org-srs-media-video-extensions '("mp4" "flv" "mkv" "aac" "mp3" "ogg" "opus")
   "List of media file extensions to search for when converting subtitles."
@@ -121,8 +143,6 @@
 
 (defun org-srs-media-explain-this-entry ()
   (interactive)
-  (require 'gptel)
-  (require 'gptel-request)
   (org-srs-entry-beginning-of-drawer org-srs-media-explain-drawer-name)
   (goto-char (pos-eol))
   (org-newline-and-indent)
@@ -140,9 +160,9 @@
       (cl-loop for text in context
                do (insert text) (newline)))
     (gptel-request
-        (replace-regexp-in-string (rx "（" (*? anychar) "）") "" (org-srs-media-entry-title))
-      :stream t :system (org-srs-media-explain-system-prompt)
-      :context (cons context-buffer gptel-context))))
+     (replace-regexp-in-string (rx "（" (*? anychar) "）") "" (org-srs-media-entry-title))
+     :stream t :system (org-srs-media-explain-system-prompt)
+     :context (cons context-buffer gptel-context))))
 
 (defcustom org-srs-media-loop-pad 0.25
   "Padding in seconds applied to A-B loop and seek boundaries.
