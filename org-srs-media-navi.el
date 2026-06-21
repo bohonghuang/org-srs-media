@@ -58,7 +58,50 @@
         (error "No child item")))))
 
 ;;;###autoload
+(defun org-srs-media-navi-up ()
+  "Move to the previous item."
+  (interactive)
+  (org-previous-item))
+
+;;;###autoload
+(defun org-srs-media-navi-down ()
+  "Move to the next item."
+  (interactive)
+  (org-next-item))
+
+;;;###autoload
+(defun org-srs-media-navi-good ()
+  "Rate the current review item as good."
+  (interactive)
+  (org-srs-review-rate-good))
+
+;;;###autoload
+(defun org-srs-media-navi-again ()
+  "Rate the current review item as again."
+  (interactive)
+  (org-srs-review-rate-again))
+
+;;;###autoload
+(defun org-srs-media-navi-easy ()
+  "Rate the current review item as easy."
+  (interactive)
+  (org-srs-review-rate-easy))
+
+;;;###autoload
+(defun org-srs-media-navi-hard ()
+  "Rate the current review item as hard."
+  (interactive)
+  (org-srs-review-rate-hard))
+
+;;;###autoload
+(defun org-srs-media-navi-explain ()
+  "Explain the current media entry with gptel."
+  (interactive)
+  (org-srs-media-explain-this-entry))
+
+;;;###autoload
 (defun org-srs-media-navi-toggle-review ()
+  "Toggle review on and off."
   (interactive)
   (if (org-srs-reviewing-p)
       (org-srs-review-quit)
@@ -69,16 +112,16 @@
   "Minor mode for navigating org items during media review.
 \\{org-srs-media-navi-mode-map}"
   :keymap (let ((map (make-sparse-keymap)))
-            (define-key map (kbd "<KEYCODE_DPAD_UP>") #'org-previous-item)
-            (define-key map (kbd "<KEYCODE_DPAD_DOWN>") #'org-next-item)
+            (define-key map (kbd "<KEYCODE_DPAD_UP>") #'org-srs-media-navi-up)
+            (define-key map (kbd "<KEYCODE_DPAD_DOWN>") #'org-srs-media-navi-down)
             (define-key map (kbd "<KEYCODE_DPAD_LEFT>") #'org-srs-media-navi-parent-item)
             (define-key map (kbd "<KEYCODE_DPAD_RIGHT>") #'org-srs-media-navi-first-child-item)
-            (define-key map (kbd "<KEYCODE_BUTTON_A>") #'org-srs-review-rate-good)
-            (define-key map (kbd "<KEYCODE_BUTTON_B>") #'org-srs-review-rate-again)
-            (define-key map (kbd "<KEYCODE_BUTTON_X>") #'org-srs-review-rate-easy)
-            (define-key map (kbd "<KEYCODE_BUTTON_Y>") #'org-srs-review-rate-hard)
+            (define-key map (kbd "<KEYCODE_BUTTON_A>") #'org-srs-media-navi-good)
+            (define-key map (kbd "<KEYCODE_BUTTON_B>") #'org-srs-media-navi-again)
+            (define-key map (kbd "<KEYCODE_BUTTON_X>") #'org-srs-media-navi-easy)
+            (define-key map (kbd "<KEYCODE_BUTTON_Y>") #'org-srs-media-navi-hard)
             (define-key map (kbd "<KEYCODE_BUTTON_START>") #'org-srs-media-navi-toggle-review)
-            (define-key map (kbd "<KEYCODE_BUTTON_SELECT>") #'org-srs-media-explain-this-entry)
+            (define-key map (kbd "<KEYCODE_BUTTON_SELECT>") #'org-srs-media-navi-explain)
             map))
 
 (defun org-srs-media-navi-setup (type &rest _args)
