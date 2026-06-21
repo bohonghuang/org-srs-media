@@ -2,16 +2,11 @@
 
 ;; Author: Coco
 ;; Package-Requires: ((emacs "27.1") (org-srs) (mpvi) (subed) (emms) (cl-lib))
-;; Keywords: multimedia, srs, org
+;; Keywords: multimedia, org
 
 ;;; Commentary:
 
-;; This package provides media (video/audio) integration for org-srs.
-;; It includes:
-;; - Subtitle-to-flashcard conversion (org-srs-video-convert-subed-buffer)
-;; - Custom review method for media+front+back card type
-;; - MPV advices for loop padding and playback control
-;; - LLM-based entry explanation (via gptel)
+;; Media-type flashcard support for Org-srs.
 
 ;;; Code:
 
@@ -19,6 +14,11 @@
 (require 'org-srs)
 (require 'mpvi)
 (require 'subed)
+
+(defcustom org-srs-media-video-extensions '("mp4" "flv" "mkv" "aac" "mp3" "ogg" "opus")
+  "List of media file extensions to search for when converting subtitles."
+  :type '(repeat string)
+  :group 'org-srs-media)
 
 (defun org-srs-media-convert-subed-buffer (subed-buffer)
   (interactive (list (read-buffer "Subed buffer: ")))
@@ -28,7 +28,6 @@
                     (match-string 1 file))
                   file)))
     (let* ((org-buffer (current-buffer))
-           ;; (org-file (buffer-file-name))
            (org-file-directory default-directory)
            (org-level (1+ (with-current-buffer org-buffer (or (org-current-level) 0)))))
       (cl-assert (eq major-mode 'org-mode))
@@ -36,7 +35,7 @@
         (cl-assert (derived-mode-p 'subed-mode))
         (cl-loop with video-file = (cl-loop with subtitle-file = (buffer-file-name)
                                             initially (cl-assert subtitle-file)
-                                            for suffix in '("mp4" "flv" "mkv" "aac" "mp3" "ogg" "opus")
+                                            for suffix in org-srs-media-video-extensions
                                             for video-file = (concat
                                                               (file-name-sans-extension subtitle-file)
                                                               "." suffix)
@@ -47,19 +46,13 @@
                  for time-start = (/ (subed-subtitle-msecs-start) 1000.0)
                  for time-stop = (/ (subed-subtitle-msecs-stop) 1000.0)
                  for text-beginning = (progn (subed-jump-to-subtitle-text) (point))
-                 ;; for text-line-end = (progn (end-of-line) (point))
                  for text-end = (progn (subed-jump-to-subtitle-end) (point))
-                 ;; for front = (buffer-substring-no-properties text-beginning text-line-end)
-                 ;; for back = (buffer-substring-no-properties (1+ text-line-end) text-end)
                  for full = (buffer-substring-no-properties text-beginning text-end)
                  do (with-current-buffer org-buffer
                       (org-insert-heading nil t org-level)
                       (insert
                        (org-link-make-string
                         (format "mpv:%s#%f-%f" video-file time-start time-stop)
-                        ;; (format "▶ %s → %s"
-                        ;;         (mpvi-secs-to-hms time-start nil t)
-                        ;;         (mpvi-secs-to-hms time-stop nil t))
                         (replace-regexp-in-string (rx (char "\n\r")) " " full))
                        "\n")
                       (org-id-get-create)
@@ -100,9 +93,15 @@
       (setf org-srs-media-previous-card-new-p org-srs-item-new-p)))
   (apply (org-srs-item-confirm) type args))
 
+(defcustom org-srs-media-explain-system-prompt-file
+  "org-srs-media/system-prompt.org"
+  "File path relative to `org-directory' containing the system prompt for gptel."
+  :type 'string
+  :group 'org-srs-media)
+
 (defun org-srs-media-explain-system-prompt ()
   (with-temp-buffer
-    (insert-file (expand-file-name "org-mode/提示词/日语句子.org" org-directory))
+    (insert-file (expand-file-name org-srs-media-explain-system-prompt-file org-directory))
     (buffer-string)))
 
 (defun org-srs-media-entry-title ()
@@ -110,14 +109,24 @@
     (cl-assert (string-match (org-link-make-regexps) link))
     (match-string 3 link)))
 
+(defcustom org-srs-media-explain-drawer-name "LLM"
+  "Name of the drawer to store LLM explanations in."
+  :type 'string
+  :group 'org-srs-media)
+
+(defcustom org-srs-media-explain-context-buffer-name "*Subtitle Context*"
+  "Name of the temporary buffer holding subtitle context for gptel."
+  :type 'string
+  :group 'org-srs-media)
+
 (defun org-srs-media-explain-this-entry ()
   (interactive)
   (require 'gptel)
   (require 'gptel-request)
-  (org-srs-entry-beginning-of-drawer "LLM")
+  (org-srs-entry-beginning-of-drawer org-srs-media-explain-drawer-name)
   (goto-char (pos-eol))
   (org-newline-and-indent)
-  (let ((context-buffer (get-buffer-create " 字幕上下文"))
+  (let ((context-buffer (get-buffer-create org-srs-media-explain-context-buffer-name))
         (context (cl-loop for offset from -1 to 1
                           nconc (org-with-wide-buffer
                                  (cl-loop initially (org-back-to-heading-or-point-min)
@@ -135,7 +144,12 @@
       :stream t :system (org-srs-media-explain-system-prompt)
       :context (cons context-buffer gptel-context))))
 
-(defvar org-srs-media-loop-pad 0.25)
+(defcustom org-srs-media-loop-pad 0.25
+  "Padding in seconds applied to A-B loop and seek boundaries.
+Added to loop-b, subtracted from loop-a and playback-time,
+giving context before and after the target subtitle segment."
+  :type 'float
+  :group 'org-srs-media)
 
 (define-advice mpvi-set (:around (fun name &rest args) org-srs-media)
   (cl-case name
