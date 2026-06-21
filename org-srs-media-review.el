@@ -5,7 +5,7 @@
 ;; Author: Bohong Huang <bohonghuang@qq.com>
 ;; Maintainer: Bohong Huang <bohonghuang@qq.com>
 ;; Version: 1.0
-;; Package-Requires: ((emacs "27.1") (org-srs "1.0") (mpvi) (emms))
+;; Package-Requires: ((emacs "27.1") (org-srs "1.0") (mpvi) (subed) (emms) (gptel))
 ;; URL: https://github.com/bohonghuang/org-srs-media
 ;; Keywords: multimedia, outline
 
@@ -31,9 +31,11 @@
 ;;; Code:
 
 (require 'cl-lib)
+
+(require 'org)
 (require 'org-srs)
-(require 'mpvi)
-(require 'emms)
+
+(require 'emms-player-mpv)
 
 (defvar org-srs-media-previous-card-new-p nil)
 

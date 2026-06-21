@@ -1,11 +1,11 @@
-;;; org-srs-media-mpv.el --- MPV advices for loop padding and playback -*- lexical-binding: t; -*-
+;;; org-srs-media-mpv.el --- MPVI advices for loop padding and playback -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026 Bohong Huang
 
 ;; Author: Bohong Huang <bohonghuang@qq.com>
 ;; Maintainer: Bohong Huang <bohonghuang@qq.com>
 ;; Version: 1.0
-;; Package-Requires: ((emacs "27.1") (mpvi) (emms))
+;; Package-Requires: ((emacs "27.1") (org-srs "1.0") (mpvi) (subed) (emms) (gptel))
 ;; URL: https://github.com/bohonghuang/org-srs-media
 ;; Keywords: multimedia, outline
 
@@ -26,14 +26,15 @@
 
 ;;; Commentary:
 
-;; MPV advices that adjust loop boundaries and playback behavior
+;; MPVI advices that adjust loop boundaries and playback behavior
 ;; for Org-srs media review.
 
 ;;; Code:
 
 (require 'cl-lib)
+
+(require 'emms-player-mpv)
 (require 'mpvi)
-(require 'emms)
 
 (defcustom org-srs-media-loop-pad 0.25
   "Padding in seconds applied to A-B loop and seek boundaries.

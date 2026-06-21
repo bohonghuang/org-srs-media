@@ -5,7 +5,7 @@
 ;; Author: Bohong Huang <bohonghuang@qq.com>
 ;; Maintainer: Bohong Huang <bohonghuang@qq.com>
 ;; Version: 1.0
-;; Package-Requires: ((emacs "27.1") (org-srs "1.0") (gptel))
+;; Package-Requires: ((emacs "27.1") (org-srs "1.0") (mpvi) (subed) (emms) (gptel))
 ;; URL: https://github.com/bohonghuang/org-srs-media
 ;; Keywords: multimedia, outline
 
@@ -31,11 +31,13 @@
 ;;; Code:
 
 (require 'cl-lib)
+
+(require 'org)
 (require 'org-srs)
+
 (require 'gptel)
 
-(defcustom org-srs-media-explain-system-prompt-file
-  "org-srs-media/system-prompt.org"
+(defcustom org-srs-media-explain-system-prompt-file "org-srs-media/system-prompt.org"
   "File path relative to `org-directory' containing the system prompt for gptel."
   :type 'string
   :group 'org-srs-media)
