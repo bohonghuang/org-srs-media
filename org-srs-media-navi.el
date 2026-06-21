@@ -70,20 +70,14 @@
             map))
 
 (defun org-srs-media-navi-setup (&rest _)
-  "Enable `org-srs-media-navi-mode' for the current review item."
-  (when org-srs-media-navi-global-mode
+  "Enable `org-srs-media-navi-mode' for `media+front+back' review items."
+  (when (eq (cl-first (ensure-list (cl-first org-srs-review-item))) 'media+front+back)
     (org-srs-media-navi-mode +1)
     (org-srs-review-add-hook-once
      'org-srs-review-continue-hook
      (lambda () (org-srs-media-navi-mode -1)))))
 
-;;;###autoload
-(define-minor-mode org-srs-media-navi-global-mode
-  "Global minor mode to enable item navigation during media reviews."
-  :global t
-  (if org-srs-media-navi-global-mode
-      (add-hook 'org-srs-item-before-review-hook #'org-srs-media-navi-setup)
-    (remove-hook 'org-srs-item-before-review-hook #'org-srs-media-navi-setup)))
+(add-hook 'org-srs-item-before-review-hook #'org-srs-media-navi-setup)
 
 (provide 'org-srs-media-navi)
 ;;; org-srs-media-navi.el ends here
