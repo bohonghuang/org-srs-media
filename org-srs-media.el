@@ -5,7 +5,7 @@
 ;; Author: Bohong Huang <bohonghuang@qq.com>
 ;; Maintainer: Bohong Huang <bohonghuang@qq.com>
 ;; Version: 1.0
-;; Package-Requires: ((emacs "27.1") (org-srs "1.0") (mpvi) (subed) (emms) (gptel))
+;; Package-Requires: ((emacs "27.1") (org-srs "1.0") (mpvi "1.3.0") (subed "1.5.1") (emms "11") (gptel "0.9.9.5"))
 ;; URL: https://github.com/bohonghuang/org-srs-media
 ;; Keywords: multimedia, outline
 
