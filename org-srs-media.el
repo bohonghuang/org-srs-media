@@ -34,6 +34,7 @@
 (require 'org-srs-media-review)
 (require 'org-srs-media-mpv)
 (require 'org-srs-media-gptel)
+(require 'org-srs-media-navi)
 
 (provide 'org-srs-media)
 ;;; org-srs-media.el ends here
