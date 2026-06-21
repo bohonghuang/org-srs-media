@@ -75,7 +75,7 @@ giving context before and after the target subtitle segment."
          (funcall fun `(seek ,(max (- time org-srs-media-loop-pad) 0.0) . ,rest))))))
     (t (funcall fun args))))
 
-(define-advice mpvi-start (:filter-args (args) org-srs-media)
+(define-advice mpvi-start (:filter-args (args) org-srs-media -50)
   (cl-destructuring-bind (path &rest args) args
     (cons path (if (numberp (car args)) (cons nil args) args))))
 

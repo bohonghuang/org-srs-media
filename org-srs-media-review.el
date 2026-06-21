@@ -57,15 +57,18 @@
         (goto-char link-beginning)
         (org-open-at-point)
         (org-srs-item-card-hide t))
-      (org-srs-item-add-hook-once
-       'org-srs-review-continue-hook
-       (lambda ()
-         (unless (org-srs-reviewing-p)
-           (emms-player-mpv-stop)))
-       75)
+      (let ((callback (org-srs-item-add-hook-once 'org-srs-review-finish-hook #'emms-player-mpv-stop))
+            (buffer (current-buffer)))
+        (org-srs-item-add-hook-once
+         'org-srs-review-continue-hook
+         (lambda ()
+           (if (org-srs-reviewing-p)
+               (with-current-buffer buffer
+                 (remove-hook 'org-srs-review-finish-hook #'emms-player-mpv-stop t))
+             (emms-player-mpv-stop)))))
       (org-srs-item-add-hook-once
        'org-srs-item-after-confirm-hook
-       #'org-srs-item-card-show)
+       (org-srs-review-item-hook #'org-srs-item-card-show))
       (setf org-srs-media-previous-card-new-p org-srs-item-new-p)))
   (apply (org-srs-item-confirm) type args))
 

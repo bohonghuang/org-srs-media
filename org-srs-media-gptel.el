@@ -65,6 +65,7 @@
 ;;;###autoload
 (defun org-srs-media-explain-this-entry ()
   (interactive)
+  (gptel-abort (current-buffer))
   (org-srs-entry-beginning-of-drawer org-srs-media-explain-drawer-name)
   (goto-char (pos-eol))
   (org-newline-and-indent)
@@ -80,11 +81,13 @@
     (with-current-buffer context-buffer
       (delete-region (point-min) (point-max))
       (cl-loop for text in context
-               do (insert text) (newline)))
-    (gptel-request
-     (replace-regexp-in-string (rx "（" (*? anychar) "）") "" (org-srs-media-entry-title))
-     :stream t :system (org-srs-media-explain-system-prompt)
-     :context (cons context-buffer gptel-context))))
+               do (insert "- " text) (newline)))
+    (let ((gptel-context (cons context-buffer gptel-context))
+          (gptel-use-context 'user))
+      (gptel-request
+          (replace-regexp-in-string (rx "（" (*? anychar) "）") "" (org-srs-media-entry-title))
+        :stream t :system (org-srs-media-explain-system-prompt)
+        :transforms gptel-prompt-transform-functions))))
 
 (provide 'org-srs-media-gptel)
 ;;; org-srs-media-gptel.el ends here
