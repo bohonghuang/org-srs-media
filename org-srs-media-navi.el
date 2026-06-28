@@ -115,6 +115,13 @@
   (gptel-abort))
 
 ;;;###autoload
+(defun org-srs-media-navi-select-select ()
+  "Reset playback speed and volume."
+  (interactive)
+  (mpvi-volume nil)
+  (mpvi-speed nil))
+
+;;;###autoload
 (defun org-srs-media-navi-select-l1 ()
   "Decrease playback speed by 0.25."
   (interactive)
@@ -253,6 +260,7 @@
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_A>") #'org-srs-media-navi-select-a)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_B>") #'org-srs-media-navi-select-b)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_L1>") #'org-srs-media-navi-select-l1)
+            (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_SELECT>") #'org-srs-media-navi-select-select)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_R1>") #'org-srs-media-navi-select-r1)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <left>") #'org-srs-media-navi-select-left)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <right>") #'org-srs-media-navi-select-right)
