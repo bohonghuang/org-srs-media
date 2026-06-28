@@ -104,6 +104,60 @@
   (gptel-abort))
 
 ;;;###autoload
+(defun org-srs-media-navi-select-l1 ()
+  "Decrease playback speed by 0.25."
+  (interactive)
+  (mpvi-speed "-0.25"))
+
+;;;###autoload
+(defun org-srs-media-navi-select-r1 ()
+  "Increase playback speed by 0.25."
+  (interactive)
+  (mpvi-speed "+0.25"))
+
+;;;###autoload
+(defun org-srs-media-navi-select-left ()
+  "Seek backward 1 second."
+  (interactive)
+  (mpvi-time "-1"))
+
+;;;###autoload
+(defun org-srs-media-navi-select-right ()
+  "Seek forward 1 second."
+  (interactive)
+  (mpvi-time "+1"))
+
+;;;###autoload
+(defun org-srs-media-navi-select-up ()
+  "Decrease volume by 10%."
+  (interactive)
+  (mpvi-volume "-10"))
+
+;;;###autoload
+(defun org-srs-media-navi-select-down ()
+  "Increase volume by 10%."
+  (interactive)
+  (mpvi-volume "+10"))
+
+(defvar org-srs-media-navi-select-repeat-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "<left>") #'org-srs-media-navi-select-left)
+    (define-key map (kbd "<right>") #'org-srs-media-navi-select-right)
+    (define-key map (kbd "<up>") #'org-srs-media-navi-select-up)
+    (define-key map (kbd "<down>") #'org-srs-media-navi-select-down)
+    (define-key map (kbd "<KEYCODE_BUTTON_L1>") #'org-srs-media-navi-select-l1)
+    (define-key map (kbd "<KEYCODE_BUTTON_R1>") #'org-srs-media-navi-select-r1)
+    (dolist (it '(org-srs-media-navi-select-left
+                  org-srs-media-navi-select-right
+                  org-srs-media-navi-select-up
+                  org-srs-media-navi-select-down
+                  org-srs-media-navi-select-l1
+                  org-srs-media-navi-select-r1))
+      (put it 'repeat-map 'org-srs-media-navi-select-repeat-map))
+    map)
+  "Keymap to repeat SELECT media adjustments.  Used in `repeat-mode'.")
+
+;;;###autoload
 (defun org-srs-media-navi-start ()
   "Toggle review on and off."
   (interactive)
@@ -150,6 +204,18 @@
   (org-srs-review-undo-redo))
 
 ;;;###autoload
+(defun org-srs-media-navi-a ()
+  "Run org-ctrl-c-ctrl-c at point."
+  (interactive)
+  (org-ctrl-c-ctrl-c))
+
+;;;###autoload
+(defun org-srs-media-navi-b ()
+  "Quit the current command."
+  (interactive)
+  (keyboard-quit))
+
+;;;###autoload
 (define-minor-mode org-srs-media-navi-mode
   "Minor mode for navigating org items during media review.
 \\{org-srs-media-navi-mode-map}"
@@ -163,8 +229,16 @@
             (define-key map (kbd "<KEYCODE_BUTTON_R1>") #'org-srs-media-navi-r1)
             (define-key map (kbd "<KEYCODE_BUTTON_R2>") #'org-srs-media-navi-r2)
             (define-key map (kbd "<KEYCODE_BUTTON_START>") #'org-srs-media-navi-start)
+            (define-key map (kbd "<KEYCODE_BUTTON_A>") #'org-srs-media-navi-a)
+            (define-key map (kbd "<KEYCODE_BUTTON_B>") #'org-srs-media-navi-b)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_A>") #'org-srs-media-navi-select-a)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_B>") #'org-srs-media-navi-select-b)
+            (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_L1>") #'org-srs-media-navi-select-l1)
+            (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_R1>") #'org-srs-media-navi-select-r1)
+            (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <left>") #'org-srs-media-navi-select-left)
+            (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <right>") #'org-srs-media-navi-select-right)
+            (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <up>") #'org-srs-media-navi-select-up)
+            (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <down>") #'org-srs-media-navi-select-down)
             map))
 
 (defun org-srs-media-navi-setup (type &rest _args)
