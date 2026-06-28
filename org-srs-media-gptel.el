@@ -67,7 +67,11 @@
   (interactive)
   (gptel-abort (current-buffer))
   (org-srs-entry-beginning-of-drawer org-srs-media-explain-drawer-name)
-  (goto-char (pos-eol))
+  (beginning-of-line)
+  (let ((element (org-element-at-point)))
+    (delete-region (org-element-begin element) (org-element-end element)))
+  (org-srs-entry-beginning-of-drawer org-srs-media-explain-drawer-name)
+  (end-of-line)
   (org-newline-and-indent)
   (let ((context-buffer (get-buffer-create org-srs-media-explain-context-buffer-name))
         (context (cl-loop for offset from -1 to 1
