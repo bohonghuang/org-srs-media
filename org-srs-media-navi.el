@@ -85,7 +85,10 @@
   (interactive)
   (condition-case nil
       (org-srs-media-navi-parent-item)
-    (error (org-fold-hide-drawer-all))))
+    (error
+     (org-srs-entry-beginning-of-drawer org-srs-media-explain-drawer-name)
+     (beginning-of-line)
+     (org-fold-hide-drawer-all))))
 
 ;;;###autoload
 (defun org-srs-media-navi-right ()
