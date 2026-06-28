@@ -33,6 +33,7 @@
 ;;; Code:
 
 (require 'org-srs-review)
+(require 'org-srs-ui-mouse)
 
 (defun org-srs-media-navi-parent-item ()
   "Move to the parent of the current list item."
@@ -126,14 +127,21 @@
 (defun org-srs-media-navi-r1 ()
   "Read next key and dispatch rating or suspend."
   (interactive)
-  (let ((key (read-key "Rate [A]good [B]again [X]easy [Y]hard [R1]suspend: ")))
-    (pcase key
-      ('KEYCODE_BUTTON_A (org-srs-review-rate-good))
-      ('KEYCODE_BUTTON_B (org-srs-review-rate-again))
-      ('KEYCODE_BUTTON_X (org-srs-review-rate-easy))
-      ('KEYCODE_BUTTON_Y (org-srs-review-rate-hard))
-      ('KEYCODE_BUTTON_R1 (org-srs-review-suspend))
-      (_ (message "Unknown key: %s" key)))))
+  (if-let ((command (org-srs-item-confirm-pending-p)))
+      (call-interactively command)
+    (let* ((faces org-srs-ui-mouse-bottom-panel-button-faces)
+           (prompt (concat
+                    "[A]" (propertize "good" 'face (alist-get :good faces)) " "
+                    "[B]" (propertize "again" 'face (alist-get :again faces)) " "
+                    "[X]" (propertize "easy" 'face (alist-get :easy faces)) " "
+                    "[Y]" (propertize "hard" 'face (alist-get :hard faces)) " "
+                    "[R1]" (propertize "suspend" 'face 'default))))
+      (cl-ecase (read-key prompt)
+        (KEYCODE_BUTTON_A (org-srs-review-rate-good))
+        (KEYCODE_BUTTON_B (org-srs-review-rate-again))
+        (KEYCODE_BUTTON_X (org-srs-review-rate-easy))
+        (KEYCODE_BUTTON_Y (org-srs-review-rate-hard))
+        (KEYCODE_BUTTON_R1 (org-srs-review-suspend))))))
 
 ;;;###autoload
 (defun org-srs-media-navi-r2 ()
