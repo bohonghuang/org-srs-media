@@ -83,13 +83,22 @@
 (defun org-srs-media-navi-left ()
   "Move to the parent of the current list item."
   (interactive)
-  (org-srs-media-navi-parent-item))
+  (condition-case nil
+      (org-srs-media-navi-parent-item)
+    (error (org-fold-hide-drawer-all))))
 
 ;;;###autoload
 (defun org-srs-media-navi-right ()
   "Move to the first child of the current list item."
   (interactive)
-  (org-srs-media-navi-first-child-item))
+  (if (org-at-item-p)
+      (org-srs-media-navi-first-child-item)
+    (org-srs-entry-beginning-of-drawer org-srs-media-explain-drawer-name)
+    (re-search-forward
+     (rx bol "- ")
+     (save-excursion
+       (org-srs-entry-end-of-drawer org-srs-media-explain-drawer-name)
+       (point)))))
 
 ;;;###autoload
 (defun org-srs-media-navi-select-a ()
@@ -129,15 +138,15 @@
 
 ;;;###autoload
 (defun org-srs-media-navi-select-up ()
-  "Decrease volume by 10%."
-  (interactive)
-  (mpvi-volume "-10"))
-
-;;;###autoload
-(defun org-srs-media-navi-select-down ()
   "Increase volume by 10%."
   (interactive)
   (mpvi-volume "+10"))
+
+;;;###autoload
+(defun org-srs-media-navi-select-down ()
+  "Decrease volume by 10%."
+  (interactive)
+  (mpvi-volume "-10"))
 
 (defvar org-srs-media-navi-select-repeat-map
   (let ((map (make-sparse-keymap)))
@@ -173,9 +182,11 @@
 
 ;;;###autoload
 (defun org-srs-media-navi-l2 ()
-  "Undo the last review action."
+  "Undo only (skip redo entries)."
   (interactive)
-  (org-srs-review-undo))
+  (condition-case nil
+      (undo-only)
+    (error (org-srs-review-undo))))
 
 ;;;###autoload
 (defun org-srs-media-navi-r1 ()
@@ -189,19 +200,25 @@
                     "[B]" (propertize "again" 'face (alist-get :again faces)) " "
                     "[X]" (propertize "easy" 'face (alist-get :easy faces)) " "
                     "[Y]" (propertize "hard" 'face (alist-get :hard faces)) " "
+                    "[L2]" (propertize "undo" 'face 'default) " "
+                    "[R2]" (propertize "redo" 'face 'default) " "
                     "[R1]" (propertize "suspend" 'face 'default))))
       (cl-ecase (read-key prompt)
         (KEYCODE_BUTTON_A (org-srs-review-rate-good))
         (KEYCODE_BUTTON_B (org-srs-review-rate-again))
         (KEYCODE_BUTTON_X (org-srs-review-rate-easy))
         (KEYCODE_BUTTON_Y (org-srs-review-rate-hard))
+        (KEYCODE_BUTTON_L2 (org-srs-review-undo))
+        (KEYCODE_BUTTON_R2 (org-srs-review-undo-redo))
         (KEYCODE_BUTTON_R1 (org-srs-review-suspend))))))
 
 ;;;###autoload
 (defun org-srs-media-navi-r2 ()
-  "Redo the last undone review action."
+  "Redo the last undone action."
   (interactive)
-  (org-srs-review-undo-redo))
+  (condition-case nil
+      (undo-redo)
+    (error (org-srs-review-undo-redo))))
 
 ;;;###autoload
 (defun org-srs-media-navi-a ()
