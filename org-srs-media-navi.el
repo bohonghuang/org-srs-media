@@ -57,6 +57,15 @@
           (goto-char child)
         (error "No child item")))))
 
+(defun org-srs-media-navi-toggle-playback ()
+  (interactive)
+  (save-excursion
+    (org-back-to-heading)
+    (re-search-forward (org-link-make-regexps) (line-end-position))
+    (let ((link-beginning (match-beginning 0)) (link-end (match-end 0)))
+      (goto-char link-beginning)
+      (org-open-at-point))))
+
 ;;;###autoload
 (defun org-srs-media-navi-up ()
   "Move to the previous item."
@@ -106,10 +115,16 @@
   (org-srs-review-rate-hard))
 
 ;;;###autoload
-(defun org-srs-media-navi-select ()
+(defun org-srs-media-navi-select-a ()
   "Explain the current media entry with gptel."
   (interactive)
   (org-srs-media-explain-this-entry))
+
+;;;###autoload
+(defun org-srs-media-navi-select-b ()
+  "Abort the current gptel session."
+  (interactive)
+  (gptel-abort))
 
 ;;;###autoload
 (defun org-srs-media-navi-start ()
@@ -120,20 +135,49 @@
     (org-srs-review-start)))
 
 ;;;###autoload
+(defun org-srs-media-navi-l1 ()
+  "Toggle media playback."
+  (interactive)
+  (org-srs-media-navi-toggle-playback))
+
+;;;###autoload
+(defun org-srs-media-navi-l2 ()
+  "Undo the last review action."
+  (interactive)
+  (org-srs-review-undo))
+
+;;;###autoload
+(defun org-srs-media-navi-r1 ()
+  "Suspend the current review."
+  (interactive)
+  (org-srs-review-suspend))
+
+;;;###autoload
+(defun org-srs-media-navi-r2 ()
+  "Redo the last undone review action."
+  (interactive)
+  (org-srs-review-undo-redo))
+
+;;;###autoload
 (define-minor-mode org-srs-media-navi-mode
   "Minor mode for navigating org items during media review.
 \\{org-srs-media-navi-mode-map}"
   :keymap (let ((map (make-sparse-keymap)))
-            (define-key map (kbd "<KEYCODE_DPAD_UP>") #'org-srs-media-navi-up)
-            (define-key map (kbd "<KEYCODE_DPAD_DOWN>") #'org-srs-media-navi-down)
-            (define-key map (kbd "<KEYCODE_DPAD_LEFT>") #'org-srs-media-navi-left)
-            (define-key map (kbd "<KEYCODE_DPAD_RIGHT>") #'org-srs-media-navi-right)
+            (define-key map (kbd "<up>") #'org-srs-media-navi-up)
+            (define-key map (kbd "<down>") #'org-srs-media-navi-down)
+            (define-key map (kbd "<left>") #'org-srs-media-navi-left)
+            (define-key map (kbd "<right>") #'org-srs-media-navi-right)
             (define-key map (kbd "<KEYCODE_BUTTON_A>") #'org-srs-media-navi-a)
             (define-key map (kbd "<KEYCODE_BUTTON_B>") #'org-srs-media-navi-b)
             (define-key map (kbd "<KEYCODE_BUTTON_X>") #'org-srs-media-navi-x)
             (define-key map (kbd "<KEYCODE_BUTTON_Y>") #'org-srs-media-navi-y)
+            (define-key map (kbd "<KEYCODE_BUTTON_L1>") #'org-srs-media-navi-l1)
+            (define-key map (kbd "<KEYCODE_BUTTON_L2>") #'org-srs-media-navi-l2)
+            (define-key map (kbd "<KEYCODE_BUTTON_R1>") #'org-srs-media-navi-r1)
+            (define-key map (kbd "<KEYCODE_BUTTON_R2>") #'org-srs-media-navi-r2)
             (define-key map (kbd "<KEYCODE_BUTTON_START>") #'org-srs-media-navi-start)
-            (define-key map (kbd "<KEYCODE_BUTTON_SELECT>") #'org-srs-media-navi-select)
+            (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_A>") #'org-srs-media-navi-select-a)
+            (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_B>") #'org-srs-media-navi-select-b)
             map))
 
 (defun org-srs-media-navi-setup (type &rest _args)
