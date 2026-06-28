@@ -94,11 +94,13 @@
   (if (org-at-item-p)
       (org-srs-media-navi-first-child-item)
     (org-srs-entry-beginning-of-drawer org-srs-media-explain-drawer-name)
+    (org-fold-hide-drawer-toggle 'off)
     (re-search-forward
      (rx bol "- ")
      (save-excursion
        (org-srs-entry-end-of-drawer org-srs-media-explain-drawer-name)
-       (point)))))
+       (point)))
+    (beginning-of-line)))
 
 ;;;###autoload
 (defun org-srs-media-navi-select-a ()
