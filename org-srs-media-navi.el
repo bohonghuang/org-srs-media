@@ -115,7 +115,7 @@
 (defun org-srs-media-navi-select-b ()
   "Abort the current gptel session."
   (interactive)
-  (gptel-abort))
+  (gptel-abort (current-buffer)))
 
 ;;;###autoload
 (defun org-srs-media-navi-select-select ()
