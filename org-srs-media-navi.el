@@ -91,30 +91,6 @@
   (org-srs-media-navi-first-child-item))
 
 ;;;###autoload
-(defun org-srs-media-navi-a ()
-  "Rate the current review item as good."
-  (interactive)
-  (org-srs-review-rate-good))
-
-;;;###autoload
-(defun org-srs-media-navi-b ()
-  "Rate the current review item as again."
-  (interactive)
-  (org-srs-review-rate-again))
-
-;;;###autoload
-(defun org-srs-media-navi-x ()
-  "Rate the current review item as easy."
-  (interactive)
-  (org-srs-review-rate-easy))
-
-;;;###autoload
-(defun org-srs-media-navi-y ()
-  "Rate the current review item as hard."
-  (interactive)
-  (org-srs-review-rate-hard))
-
-;;;###autoload
 (defun org-srs-media-navi-select-a ()
   "Explain the current media entry with gptel."
   (interactive)
@@ -148,9 +124,16 @@
 
 ;;;###autoload
 (defun org-srs-media-navi-r1 ()
-  "Suspend the current review."
+  "Read next key and dispatch rating or suspend."
   (interactive)
-  (org-srs-review-suspend))
+  (let ((key (read-key "Rate [A]good [B]again [X]easy [Y]hard [R1]suspend: ")))
+    (pcase key
+      ('KEYCODE_BUTTON_A (org-srs-review-rate-good))
+      ('KEYCODE_BUTTON_B (org-srs-review-rate-again))
+      ('KEYCODE_BUTTON_X (org-srs-review-rate-easy))
+      ('KEYCODE_BUTTON_Y (org-srs-review-rate-hard))
+      ('KEYCODE_BUTTON_R1 (org-srs-review-suspend))
+      (_ (message "Unknown key: %s" key)))))
 
 ;;;###autoload
 (defun org-srs-media-navi-r2 ()
@@ -167,10 +150,6 @@
             (define-key map (kbd "<down>") #'org-srs-media-navi-down)
             (define-key map (kbd "<left>") #'org-srs-media-navi-left)
             (define-key map (kbd "<right>") #'org-srs-media-navi-right)
-            (define-key map (kbd "<KEYCODE_BUTTON_A>") #'org-srs-media-navi-a)
-            (define-key map (kbd "<KEYCODE_BUTTON_B>") #'org-srs-media-navi-b)
-            (define-key map (kbd "<KEYCODE_BUTTON_X>") #'org-srs-media-navi-x)
-            (define-key map (kbd "<KEYCODE_BUTTON_Y>") #'org-srs-media-navi-y)
             (define-key map (kbd "<KEYCODE_BUTTON_L1>") #'org-srs-media-navi-l1)
             (define-key map (kbd "<KEYCODE_BUTTON_L2>") #'org-srs-media-navi-l2)
             (define-key map (kbd "<KEYCODE_BUTTON_R1>") #'org-srs-media-navi-r1)
