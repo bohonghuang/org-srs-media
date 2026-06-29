@@ -69,7 +69,7 @@
   (org-srs-entry-beginning-of-drawer org-srs-media-explain-drawer-name)
   (beginning-of-line)
   (let ((element (org-element-at-point)))
-    (delete-region (org-element-begin element) (org-element-end element)))
+    (delete-region (max (point-min) (org-element-begin element)) (min (org-element-end element) (point-max))))
   (org-srs-entry-beginning-of-drawer org-srs-media-explain-drawer-name)
   (end-of-line)
   (org-newline-and-indent)
