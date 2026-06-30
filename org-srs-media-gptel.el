@@ -62,6 +62,24 @@
   :type 'string
   :group 'org-srs-media)
 
+(cl-defun org-srs-media-drawer-folded-p (&optional (element (org-element-at-point)))
+  (when-let ((post (org-element-post-affiliated element)))
+    (let ((start (save-excursion
+                   (goto-char post)
+                   (line-end-position))))
+      (org-fold-folded-p start 'drawer))))
+
+(cl-defun org-srs-media-inside-llm-drawer-p (&optional (position (point)))
+  (save-excursion
+    (org-back-to-heading-or-point-min)
+    (let ((heading-start (point)))
+      (org-srs-entry-end-of-meta-data t)
+      (when (re-search-backward (rx bol (* blank) ":" (literal org-srs-media-explain-drawer-name) ":" (* blank) eol) heading-start t)
+        (let ((element (org-element-at-point)))
+          (cl-assert (eq (org-element-type element) 'drawer))
+          (or (not (org-srs-media-drawer-folded-p element))
+              (< (org-element-begin element) position (org-element-end element))))))))
+
 ;;;###autoload
 (defun org-srs-media-explain-this-entry ()
   (interactive)
