@@ -108,6 +108,9 @@
 (defun org-srs-media-navi-select-a ()
   "Explain the current media entry with gptel."
   (interactive)
+  (cl-loop for command = (org-srs-item-confirm-pending-p)
+           while command
+           do (call-interactively command))
   (org-srs-media-explain-this-entry))
 
 ;;;###autoload
