@@ -27,9 +27,9 @@
 ;;; Commentary:
 
 ;; Custom `org-srs-item-review' method for `media+front+back' cards.
-;; New cards play with audio and reveal text after one confirmation.
-;; Reviewed cards start muted; the first confirmation enables audio, and
-;; the second reveals heading/body and makes the card ready for rating.
+;; `org-srs-media-review-refine-predicate' selects a muted recall stage.
+;; Its first confirmation enables audio; the second reveals text for rating.
+;; Other cards play with audio and reveal text after one confirmation.
 ;; Mute changes use `mpvi-toggle-mute' after checking the current state.
 ;; A cold player starts with `mpvi-mpv-mute-p' and must become ready
 ;; within five seconds before confirmations are accepted.
@@ -45,6 +45,16 @@
 
 (defvar org-srs-media-previous-card-new-p nil)
 
+(defcustom org-srs-media-review-refine-predicate (org-srs-query-predicate '(not new))
+  "Predicate enabling a muted recall stage for the current review item.
+Called without arguments once per card, after narrowing, with point at
+the item as positioned by `org-srs-item-with-current'.  A non-nil result
+enables two confirmations: first unmute while keeping text hidden, then
+reveal text for rating.  Nil skips the muted stage.
+By default, new cards skip the muted stage and other cards use it."
+  :type 'function
+  :group 'org-srs-media)
+
 (defun org-srs-media-review--stop ()
   "Stop media playback when its review session finishes."
   (emms-player-mpv-stop)
@@ -56,6 +66,8 @@
   (org-srs-item-narrow)
   (let* ((newp (org-srs-item-with-current (type . args)
                 (funcall (org-srs-query-predicate-new))))
+         (refinedp (org-srs-item-with-current (type . args)
+                     (funcall org-srs-media-review-refine-predicate)))
          (active t)
          completed pending-hook cleanup)
     (cl-labels ((set-mute (value)
@@ -65,7 +77,7 @@
                     (mpvi-toggle-mute))))
       ;; The startup preference handles a new player; toggle handles an
       ;; already-playing video before opening/seeking the next card.
-      (set-mute (not newp))
+      (set-mute refinedp)
       (add-hook 'org-srs-review-finish-hook #'org-srs-media-review--stop)
       (setq cleanup
             (org-srs-item-add-hook-once
@@ -97,7 +109,7 @@
                    'org-srs-item-after-confirm-hook
                    (org-srs-review-item-hook
                     (lambda ()
-                      (if (and (not newp) active (org-srs-reviewing-p))
+                      (if (and refinedp active (org-srs-reviewing-p))
                           (progn
                             (set-mute nil)
                             (setq pending-hook
