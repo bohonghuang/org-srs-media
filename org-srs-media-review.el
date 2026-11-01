@@ -27,6 +27,12 @@
 ;;; Commentary:
 
 ;; Custom `org-srs-item-review' method for `media+front+back' cards.
+;; New cards play with audio and reveal text after one confirmation.
+;; Reviewed cards start muted; the first confirmation enables audio, and
+;; the second reveals heading/body and makes the card ready for rating.
+;; Mute changes use `mpvi-toggle-mute' after checking the current state.
+;; A cold player starts with `mpvi-mpv-mute-p' and must become ready
+;; within five seconds before confirmations are accepted.
 
 ;;; Code:
 
@@ -35,42 +41,80 @@
 (require 'org)
 (require 'org-srs)
 
-(require 'emms-player-mpv)
+(require 'org-srs-media-mpv)
 
 (defvar org-srs-media-previous-card-new-p nil)
 
+(defun org-srs-media-review--stop ()
+  "Stop media playback when its review session finishes."
+  (emms-player-mpv-stop)
+  (remove-hook 'org-srs-review-finish-hook #'org-srs-media-review--stop))
+
 (cl-defmethod org-srs-item-review ((type (eql 'media+front+back)) &rest args)
   (cl-assert (null args))
-  (let ((entry-content
-         (buffer-substring-no-properties
-          (save-excursion
-            (org-end-of-meta-data t)
-            (point))
-          (org-entry-end-position))))
-    (org-srs-item-narrow)
-    (defvar org-srs-item-new-p)
-    (let ((org-srs-item-new-p (org-srs-item-with-current (type . args)
-                                (funcall (org-srs-query-predicate-new)))))
-      (org-back-to-heading)
-      (re-search-forward (org-link-make-regexps) (line-end-position))
-      (let ((link-beginning (match-beginning 0)) (link-end (match-end 0)))
-        (goto-char link-beginning)
-        (org-open-at-point)
-        (org-srs-item-card-hide t))
-      (let ((callback (org-srs-item-add-hook-once 'org-srs-review-finish-hook #'emms-player-mpv-stop))
-            (buffer (current-buffer)))
-        (org-srs-item-add-hook-once
-         'org-srs-review-continue-hook
-         (lambda ()
-           (if (org-srs-reviewing-p)
-               (with-current-buffer buffer
-                 (remove-hook 'org-srs-review-finish-hook #'emms-player-mpv-stop t))
-             (emms-player-mpv-stop)))))
-      (org-srs-item-add-hook-once
-       'org-srs-item-after-confirm-hook
-       (org-srs-review-item-hook #'org-srs-item-card-show))
-      (setf org-srs-media-previous-card-new-p org-srs-item-new-p)))
-  (apply (org-srs-item-confirm) type args))
+  (defvar org-srs-reviewing-p)
+  (org-srs-item-narrow)
+  (let* ((newp (org-srs-item-with-current (type . args)
+                (funcall (org-srs-query-predicate-new))))
+         (active t)
+         completed pending-hook cleanup)
+    (cl-labels ((set-mute (value)
+                  (setq mpvi-mpv-mute-p value)
+                  (when (and (emms-player-mpv-proc-playing-p)
+                             (not (eq (mpvi-get 'mute) value)))
+                    (mpvi-toggle-mute))))
+      ;; The startup preference handles a new player; toggle handles an
+      ;; already-playing video before opening/seeking the next card.
+      (set-mute (not newp))
+      (add-hook 'org-srs-review-finish-hook #'org-srs-media-review--stop)
+      (setq cleanup
+            (org-srs-item-add-hook-once
+             'org-srs-review-continue-hook
+             (lambda ()
+               (setq active nil)
+               (set-mute nil)
+               (org-srs-item-card-show)
+               (unless (org-srs-reviewing-p)
+                 (org-srs-media-review--stop)))
+             -90))
+      (unwind-protect
+          (progn
+            (org-back-to-heading)
+            (re-search-forward (org-link-make-regexps) (line-end-position))
+            (goto-char (match-beginning 0))
+            (defvar org-srs-item-new-p)
+            (let ((org-srs-item-new-p newp))
+              (org-open-at-point))
+            (org-srs-item-card-hide t)
+            ;; Toggle requires live playback, so finish cold startup before
+            ;; accepting confirmations instead of maintaining async state.
+            (with-timeout (5 (user-error "Media playback did not start"))
+              (while (not (emms-player-mpv-proc-playing-p))
+                (accept-process-output nil 0.05)))
+            (setq org-srs-media-previous-card-new-p newp)
+            (setq pending-hook
+                  (org-srs-item-add-hook-once
+                   'org-srs-item-after-confirm-hook
+                   (org-srs-review-item-hook
+                    (lambda ()
+                      (if (and (not newp) active (org-srs-reviewing-p))
+                          (progn
+                            (set-mute nil)
+                            (setq pending-hook
+                                  (org-srs-item-add-hook-once
+                                   'org-srs-item-after-confirm-hook
+                                   (org-srs-review-item-hook #'org-srs-item-card-show)
+                                   -10))
+                            (apply (org-srs-item-confirm) type args))
+                        (org-srs-item-card-show))))
+                   -10))
+            (apply (org-srs-item-confirm) type args)
+            (setq completed t))
+        (unless completed
+          (when pending-hook
+            (remove-hook 'org-srs-item-after-confirm-hook pending-hook t))
+          (let ((org-srs-reviewing-p nil))
+            (funcall cleanup)))))))
 
 (provide 'org-srs-media-review)
 ;;; org-srs-media-review.el ends here
