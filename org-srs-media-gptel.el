@@ -37,14 +37,14 @@
 
 (require 'gptel)
 
-(defcustom org-srs-media-explain-system-prompt-file "org-srs-media/system-prompt.org"
+(defcustom org-srs-media-explain-system-prompt-file "org-srs-media/system-prompt_%s.org"
   "File path relative to `org-directory' containing the system prompt for gptel."
   :type 'string
   :group 'org-srs-media)
 
-(defun org-srs-media-explain-system-prompt ()
+(defun org-srs-media-explain-system-prompt (lang)
   (with-temp-buffer
-    (insert-file (expand-file-name org-srs-media-explain-system-prompt-file org-directory))
+    (insert-file (expand-file-name (format org-srs-media-explain-system-prompt-file lang) org-directory))
     (buffer-string)))
 
 (defun org-srs-media-entry-title ()
