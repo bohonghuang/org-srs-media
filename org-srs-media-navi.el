@@ -29,6 +29,10 @@
 ;; Item navigation support during `media+front+back' card review.
 ;; Provides `org-srs-media-navi-mode' with convenient key bindings
 ;; for moving between list items and org headings.
+;; SELECT X prompts for a contextual question with mnemonic, etymology,
+;; example and synonym presets, or accepts a freely typed question.
+;; In that minibuffer only, controller A acts as RET and B as C-g.
+;; The selected question is sent to `org-srs-media-question-at-point'.
 
 ;;; Code:
 
@@ -118,6 +122,20 @@
   "Abort the current gptel session."
   (interactive)
   (gptel-abort (current-buffer)))
+
+;;;###autoload
+(defun org-srs-media-navi-select-x ()
+  "Ask a preset or freely typed question about the current list item.
+Controller A accepts using RET; B cancels using C-g in this minibuffer only."
+  (interactive)
+  (org-srs-media-question-at-point
+   (minibuffer-with-setup-hook
+       (lambda ()
+         (use-local-map (copy-keymap (current-local-map)))
+         (local-set-key (kbd "<KEYCODE_BUTTON_A>") (kbd "RET"))
+         (local-set-key (kbd "<KEYCODE_BUTTON_B>") (kbd "C-g")))
+     (completing-read "Question: " org-srs-media-navi-question-presets
+                      nil nil))))
 
 ;;;###autoload
 (defun org-srs-media-navi-select-select ()
@@ -293,6 +311,7 @@
             (define-key map (kbd "<KEYCODE_BUTTON_Y>") #'org-srs-media-navi-y)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_A>") #'org-srs-media-navi-select-a)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_B>") #'org-srs-media-navi-select-b)
+            (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_X>") #'org-srs-media-navi-select-x)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_L1>") #'org-srs-media-navi-select-l1)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_SELECT>") #'org-srs-media-navi-select-select)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_START>") #'org-srs-media-navi-select-start)

@@ -200,6 +200,17 @@ plus the current subtitle."
       (goto-char origin)
       (append before (list (org-srs-media-entry-title)) after))))
 
+(defcustom org-srs-media-navi-question-presets
+  '("记忆技巧：这个表达有什么记忆技巧（词源、形象记忆、中文谐音、相同发音的词之间的形象关联等）？"
+    "词源拆解：这个词怎么来的，如何从各个组分、词根词缀的单独字面义来理解表达整体的含义？"
+    "例句扩展：给出更多场景的例句和翻译。"
+    "近义辨析：有哪些近义表达？列举并用同一个例句（仅替换近义表达进去）说明，通过句子的含义来说明细微差异。")
+  "Preset contextual questions offered by SELECT X.
+Each string is both a completion candidate and the question to send.
+Add, edit or remove strings to customize the choices; free input is allowed."
+  :type '(repeat string)
+  :group 'org-srs-media)
+
 (defcustom org-srs-media-question-system-prompt
   "你是中国学生的语言老师。根据给定字幕、已有语法解释和当前列表项，
 只回答用户对当前项的追问，不要重新解析整句，不要重复问题。
