@@ -28,7 +28,9 @@
 
 ;; Use gptel to explain media entries with surrounding subtitle context.
 ;; `org-srs-media-question-at-point' asks a contextual follow-up and appends
-;; a checkbox child to the current list item, including nested questions.
+;; a checkbox child, or replaces the matching direct child's entire subtree.
+;; Interactive calls offer extensible presets or free input, with controller
+;; A/B acting as RET/C-g only in that minibuffer.  Questions can be nested.
 ;; It uses `gptel-request' with the default insertion callback; the system
 ;; prompt includes surrounding subtitles, existing notes and body indentation.
 ;; Global gptel insertion advices preserve narrowing in every target buffer.
@@ -205,7 +207,7 @@ plus the current subtitle."
     "词源拆解：这个词怎么来的，如何从各个组分、词根词缀的单独字面义来理解表达整体的含义？"
     "例句扩展：给出更多场景的例句和翻译。"
     "近义辨析：有哪些近义表达？列举并用同一个例句（仅替换近义表达进去）说明，通过句子的含义来说明细微差异。")
-  "Preset contextual questions offered by SELECT X.
+  "Preset contextual questions offered by SELECT A in the LLM drawer.
 Each string is both a completion candidate and the question to send.
 Add, edit or remove strings to customize the choices; free input is allowed."
   :type '(repeat string)
@@ -247,9 +249,18 @@ Add, edit or remove strings to customize the choices; free input is allowed."
 ;;;###autoload
 (defun org-srs-media-question-at-point (question)
   "Ask QUESTION about the current Org list item using subtitle context.
-Append a checkbox child and stream its answer below it.  Leave point on
-the question.  Questions may themselves receive nested follow-ups."
-  (interactive (list (read-string "Question: ")))
+Replace a matching direct question child, including its answer and nested
+follow-ups; otherwise append a checkbox child.  Leave point on the question.
+Interactively, offer presets or free input, with controller A/B as RET/C-g."
+  (interactive
+   (list
+    (minibuffer-with-setup-hook
+        (lambda ()
+          (use-local-map (copy-keymap (current-local-map)))
+          (local-set-key (kbd "<KEYCODE_BUTTON_A>") (kbd "RET"))
+          (local-set-key (kbd "<KEYCODE_BUTTON_B>") (kbd "C-g")))
+      (completing-read "Question: " org-srs-media-navi-question-presets
+                       nil nil))))
   (unless (and (derived-mode-p 'org-mode) (org-in-item-p))
     (user-error "Place point on a grammar or question list item"))
   (when (string-empty-p (string-trim question))
@@ -257,11 +268,31 @@ the question.  Questions may themselves receive nested follow-ups."
   (let* ((item (org-in-item-p))
          (struct (org-list-struct))
          (system (org-srs-media-gptel--question-context item struct))
+         (existing
+          (cl-find-if
+           (lambda (child)
+             (save-excursion
+               (goto-char child)
+               (move-to-column (org-list-item-body-column child))
+               (when (org-list-get-checkbox child struct)
+                 (forward-char 3)
+                 (skip-chars-forward " \t"))
+               (equal question
+                      (string-trim
+                       (string-remove-suffix
+                        "\\\\" (string-trim
+                                (buffer-substring-no-properties
+                                 (point) (line-end-position))))))))
+           (org-list-get-children item struct (org-list-parents-alist struct))))
          (indent (make-string (org-list-item-body-column item) ?\s))
          (answer-indent (concat indent "  "))
          question-position answer-position)
-    (goto-char (org-list-get-item-end item struct))
-    (unless (bolp) (insert "\n"))
+    (if existing
+        (progn
+          (goto-char existing)
+          (delete-region existing (org-list-get-item-end existing struct)))
+      (goto-char (org-list-get-item-end item struct))
+      (unless (bolp) (insert "\n")))
     (insert indent)
     (setq question-position (point-marker))
     (insert "- [ ] " question " \\\\\n")
@@ -279,9 +310,7 @@ the question.  Questions may themselves receive nested follow-ups."
 (defun org-srs-media-explain-this-entry ()
   (interactive)
   (gptel-abort (current-buffer))
-  (print (point))
   (org-srs-entry-beginning-of-drawer org-srs-media-explain-drawer-name)
-  (print (point))
   (beginning-of-line)
   (let ((element (org-element-at-point)))
     (delete-region (max (point-min) (org-element-begin element)) (min (org-element-end element) (point-max))))

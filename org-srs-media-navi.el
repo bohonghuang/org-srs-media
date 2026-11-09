@@ -29,10 +29,10 @@
 ;; Item navigation support during `media+front+back' card review.
 ;; Provides `org-srs-media-navi-mode' with convenient key bindings
 ;; for moving between list items and org headings.
-;; SELECT X prompts for a contextual question with mnemonic, etymology,
-;; example and synonym presets, or accepts a freely typed question.
-;; In that minibuffer only, controller A acts as RET and B as C-g.
-;; The selected question is sent to `org-srs-media-question-at-point'.
+;; SELECT A asks a preset or freely typed question on a list item in the
+;; LLM drawer; elsewhere it explains the media entry.  In the question
+;; minibuffer only, controller A acts as RET and B as C-g.
+;; SELECT L2 kills the current Org element; SELECT R2 yanks it back.
 
 ;;; Code:
 
@@ -110,32 +110,23 @@
 
 ;;;###autoload
 (defun org-srs-media-navi-select-a ()
-  "Explain the current media entry with gptel."
+  "Ask about an LLM list item, or explain the current media entry."
   (interactive)
-  (cl-loop for command = (org-srs-item-confirm-pending-p)
-           while command
-           do (call-interactively command))
-  (org-srs-media-explain-this-entry))
+  (let ((drawer (org-element-lineage (org-element-context) '(drawer) t)))
+    (if (and (org-in-item-p) drawer
+             (equal (org-element-property :drawer-name drawer)
+                    org-srs-media-explain-drawer-name))
+        (call-interactively #'org-srs-media-question-at-point)
+      (cl-loop for command = (org-srs-item-confirm-pending-p)
+               while command
+               do (call-interactively command))
+      (org-srs-media-explain-this-entry))))
 
 ;;;###autoload
 (defun org-srs-media-navi-select-b ()
   "Abort the current gptel session."
   (interactive)
   (gptel-abort (current-buffer)))
-
-;;;###autoload
-(defun org-srs-media-navi-select-x ()
-  "Ask a preset or freely typed question about the current list item.
-Controller A accepts using RET; B cancels using C-g in this minibuffer only."
-  (interactive)
-  (org-srs-media-question-at-point
-   (minibuffer-with-setup-hook
-       (lambda ()
-         (use-local-map (copy-keymap (current-local-map)))
-         (local-set-key (kbd "<KEYCODE_BUTTON_A>") (kbd "RET"))
-         (local-set-key (kbd "<KEYCODE_BUTTON_B>") (kbd "C-g")))
-     (completing-read "Question: " org-srs-media-navi-question-presets
-                      nil nil))))
 
 ;;;###autoload
 (defun org-srs-media-navi-select-select ()
@@ -155,6 +146,13 @@ Controller A accepts using RET; B cancels using C-g in this minibuffer only."
   "Increase playback speed by 0.25."
   (interactive)
   (mpvi-speed "+0.25"))
+
+;;;###autoload
+(defun org-srs-media-navi-select-l2 ()
+  "Kill the current Org element, as with M-h followed by C-w."
+  (interactive)
+  (org-mark-element)
+  (kill-region (region-beginning) (region-end)))
 
 ;;;###autoload
 (defun org-srs-media-navi-select-left ()
@@ -311,11 +309,12 @@ Controller A accepts using RET; B cancels using C-g in this minibuffer only."
             (define-key map (kbd "<KEYCODE_BUTTON_Y>") #'org-srs-media-navi-y)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_A>") #'org-srs-media-navi-select-a)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_B>") #'org-srs-media-navi-select-b)
-            (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_X>") #'org-srs-media-navi-select-x)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_L1>") #'org-srs-media-navi-select-l1)
+            (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_L2>") #'org-srs-media-navi-select-l2)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_SELECT>") #'org-srs-media-navi-select-select)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_START>") #'org-srs-media-navi-select-start)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_R1>") #'org-srs-media-navi-select-r1)
+            (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <KEYCODE_BUTTON_R2>") #'yank)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <left>") #'org-srs-media-navi-select-left)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <right>") #'org-srs-media-navi-select-right)
             (define-key map (kbd "<KEYCODE_BUTTON_SELECT> <up>") #'org-srs-media-navi-select-up)
